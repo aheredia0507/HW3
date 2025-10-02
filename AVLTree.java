@@ -1,6 +1,6 @@
 
 /*
- * *** YOUR NAME GOES HERE / YOUR SECTION NUMBER ***
+ * *** Arthur Heredia / COMP 272 002 F25 ***
  *
  * This java file is a Java object implementing simple AVL Tree.
  * You are to complete the deleteElement method.
@@ -172,8 +172,6 @@ class LUC_AVLTree {
         return Math.max(value, Math.max(leftMin, rightMin));
     }
 
-
-
     /**
      *  Method preorderTraversal
      *
@@ -195,7 +193,6 @@ class LUC_AVLTree {
         return node.value + " " + preorderTraversal(node.leftChild)
                 + preorderTraversal(node.rightChild);
     }
-
 
     /**
      *  Method: InsertElement
@@ -339,32 +336,97 @@ class LUC_AVLTree {
      *  @param node  - the top node of the [sub]tree where the delete will occur
      *
      *  @return node - new top of subtree, it possibly changed due to a rotation
+     *
+     *  ----------------------------------------------------------------------------------------------------------------
+     * Pseudocode:
+     *
+     * 1. If the current node is null, return null
+     *
+     * 2. If the value is smaller than this node’s value, go left and recurse
+     *
+     * 3. Else if the value is bigger than this node’s value, go right and recurse
+     *
+     * 4. Otherwise, we found the node we want to delete:
+     *    a) If it has no children, return null
+     *    b) If it only has a left child, return the left child
+     *    c) If it only has a right child, return the right child
+     *    d) If it has two children:
+     *         - Find the smallest value in the right subtree
+     *         - Replace this node’s value with that value
+     *         - Recurse on the right subtree to delete the successor node
+     *
+     * 5. After deleting, update this node’s height
+     *
+     * 6. Check the balance factor:
+     *    - If it is > 1, the tree is left heavy:
+     *         * If left child is balanced or left heavy, do LL rotation
+     *         * Else, do LR rotation
+     *    - If it is < -1, the tree is right heavy:
+     *         * If right child is balanced or right heavy, do RR rotation
+     *         * Else, do RL rotation
+     *
+     * 7. Return this node (which might be new if a rotation happened)
+     *
      */
 
     private Node deleteElement(int value, Node node) {
+        if (node == null) {    // 1. If node is null, the value is not here
+            return null;
+        }
 
-        /*
-         * ADD CODE HERE
-         * 
-         * NOTE, that you should use the existing coded private methods
-         * in this file, which include:
-         *      - minValueNode,
-         *      - getMaxHeight,
-         *      - getHeight,
-         *      - getBalanceFactor,
-         *      - LLRotation
-         *      - RRRotation,
-         *      - LRRotation,
-         *      - RLRotation.
-         *
-         * To understand what each of these methods do, see the method prologues and
-         * code for each. You can also look at the method InsertElement, as it has do
-         * do many of the same things as this method.
-         */
+        if (value < node.value) {    // 2. Go left if the value is smaller
+            node.leftChild = deleteElement(value, node.leftChild);
+        }
 
-        return node;
-    }
+        else if (value > node.value) {    // 3. Go right if the value is bigger
+            node.rightChild = deleteElement(value, node.rightChild);
+        }
 
+        else {   // 4. Otherwise, we found the node to delete
+            if (node.leftChild == null && node.rightChild == null) {   // 4a. No children, remove it
+                return null;
+            }
+
+            else if (node.rightChild == null) {  // 4b. Only left child, replace with left subtree
+                return node.leftChild;
+            }
+
+            else if (node.leftChild == null) {  // 4c. Only right child, replace with right subtree
+                return node.rightChild;
+            }
+
+            else {  // 4d. Two children, use inorder successor
+                Node successor = minValueNode(node.rightChild);  // smallest in right
+                node.value = successor.value;                    // copy its value
+                node.rightChild = deleteElement(successor.value, node.rightChild);
+            }
+        }
+
+        node.height = getMaxHeight(getHeight(node.leftChild), // 5. Update the height after deletion
+                getHeight(node.rightChild)) + 1;
+
+        int bf = getBalanceFactor(node); // 6. Check balance factor and fix if needed
+
+        if (bf > 1) { // Left heavy case
+            if (getBalanceFactor(node.leftChild) >= 0) {
+                node = LLRotation(node);   // do LL
+            }
+            else {
+                node = LRRotation(node);   // do LR
+            }
+        }
+
+        else if (bf < -1) { // Right heavy case
+            if (getBalanceFactor(node.rightChild) <= 0) {
+                node = RRRotation(node);   // do RR
+            }
+            else {
+                node = RLRotation(node);   // do RL
+            }
+        }
+
+        return node;  // 7. Return the new root for this subtree
+        }
 
     /**
      *  Method getBalance
